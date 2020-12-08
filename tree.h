@@ -30,42 +30,12 @@ public:
 	}
 
 	void insert(T item) {
-		++_size;
 		if (_root == nullptr) {
 			_root = std::make_unique<Node>(std::move(item), nullptr, nullptr);
-			return;
-		}
-
-		Node* parent = parentNode(_root.get(), item);
-		if (item < parent->item) {
-			if (parent->left) {
-				parent->left = std::make_unique<Node>(
-					std::move(item),
-					std::move(parent->left),
-					nullptr
-				);
-			} else {
-				parent->left = std::make_unique<Node>(
-					std::move(item),
-					nullptr,
-					nullptr
-				);
-			}
 		} else {
-			if (parent->right) {
-				parent->right = std::make_unique<Node>(
-					std::move(item),
-					nullptr,
-					std::move(parent->right)
-				);
-			} else {
-				parent->right = std::make_unique<Node>(
-					std::move(item),
-					nullptr,
-					nullptr
-				);
-			}
+			nodeInsert(_root.get(), item);
 		}
+		++_size;
 	}
 
 	size_t size() const {
@@ -106,20 +76,32 @@ private:
 		return result;
 	}
 
-	static Node* parentNode(Node* root, const T& item) {
-		Node* curr = root;
-		Node* parent;
-		while (curr) {
-			parent = curr;
-			if (item == curr->item) {
-				return {parent};
-			} else if (item < curr->item) {
-				curr = curr->left.get();
+	static void nodeInsert(Node* node, T& item) {
+		if (item == node->item) {
+			return;
+		}
+
+		if (item < node->item) {
+			if (node->left == nullptr) {
+				node->left = std::make_unique<Node>(
+					std::move(item),
+					nullptr,
+					nullptr
+				);
 			} else {
-				curr = curr->right.get();
+				nodeInsert(node->left.get(), item);
+			}
+		} else {
+			if (node->right == nullptr) {
+				node->right = std::make_unique<Node>(
+					std::move(item),
+					nullptr,
+					nullptr
+				);
+			} else {
+				nodeInsert(node->right.get(), item);
 			}
 		}
-		return {parent};
 	}
 };
 
