@@ -72,6 +72,20 @@ public:
 		return _size;
 	}
 
+	bool contains(const T& item) const {
+		Node* curr = _root.get();
+		while (curr) {
+			if (item == curr->item) {
+				return true;
+			} else if (item < curr->item) {
+				curr = curr->left.get();
+			} else {
+				curr = curr->right.get();
+			}
+		}
+		return false;
+	}
+
 private:
 	std::unique_ptr<Node> _root;
 	size_t _size;

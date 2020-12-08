@@ -54,3 +54,20 @@ TEST(Tree, insert) {
 		EXPECT_EQ(tree.items(), tests[i].expected) << i;
 	}
 }
+
+TEST(Tree, contains) {
+	{
+		Tree<int> tree;
+		EXPECT_FALSE(tree.contains(0));
+	}
+	{
+		Tree<int> tree;
+		tree.insert(1);
+		tree.insert(0);
+		tree.insert(2);
+		EXPECT_TRUE(tree.contains(0));
+		EXPECT_TRUE(tree.contains(1));
+		EXPECT_TRUE(tree.contains(2));
+		EXPECT_FALSE(tree.contains(3));
+	}
+}
