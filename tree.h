@@ -26,14 +26,14 @@ public:
 		, _size(0) {}
 
 	std::vector<T> items() const {
-		return nodeEntries(_root.get());
+		return nodeEntries(_root);
 	}
 
 	void insert(T item) {
 		if (_root == nullptr) {
 			_root = std::make_unique<Node>(std::move(item), nullptr, nullptr);
 		} else {
-			nodeInsert(_root.get(), item);
+			_root = nodeInsert(std::move(_root), item);
 		}
 		++_size;
 	}
@@ -60,14 +60,14 @@ private:
 	std::unique_ptr<Node> _root;
 	size_t _size;
 
-	static std::vector<T> nodeEntries(const Node* node) {
+	static std::vector<T> nodeEntries(const std::unique_ptr<Node>& node) {
 		if (node == nullptr) {
 			return {};
 		}
 
-		auto result = nodeEntries(node->left.get());
+		auto result = nodeEntries(node->left);
 		result.push_back(node->item);
-		auto rightEntries = nodeEntries(node->right.get());
+		auto rightEntries = nodeEntries(node->right);
 		result.insert(
 			result.end(),
 			std::make_move_iterator(rightEntries.begin()),
@@ -76,9 +76,9 @@ private:
 		return result;
 	}
 
-	static void nodeInsert(Node* node, T& item) {
+	static std::unique_ptr<Node> nodeInsert(std::unique_ptr<Node> node, T& item) {
 		if (item == node->item) {
-			return;
+			return node;
 		}
 
 		if (item < node->item) {
@@ -89,7 +89,15 @@ private:
 					nullptr
 				);
 			} else {
-				nodeInsert(node->left.get(), item);
+				node->left = nodeInsert(std::move(node->left), item);
+				if (balance_factor(node) > 1) {
+					if (balance_factor(node->left) > 0) { // Left left
+						node = right_rotate(std::move(node));
+					} else { // Left right
+						node->left = left_rotate(std::move(node->left));
+						node = right_rotate(std::move(node));
+					}
+				}
 			}
 		} else {
 			if (node->right == nullptr) {
@@ -99,9 +107,45 @@ private:
 					nullptr
 				);
 			} else {
-				nodeInsert(node->right.get(), item);
+				node->right = nodeInsert(std::move(node->right), item);
+				if (balance_factor(node) < 1) {
+					if (balance_factor(node->right) > 0) { // Right left
+						node->right = right_rotate(std::move(node->right));
+						node = left_rotate(std::move(node));
+					} else { // Right right
+						node = left_rotate(std::move(node));
+					}
+				}
 			}
 		}
+
+		return node;
+	}
+
+	static long long balance_factor(const std::unique_ptr<Node>& node) {
+		return nodeHeight(node->left) - nodeHeight(node->right);
+	}
+
+	static size_t nodeHeight(const std::unique_ptr<Node>& node) {
+		if (node == nullptr) {
+			return 0;
+		}
+
+		return std::max(nodeHeight(node->left), nodeHeight(node->right)) + 1;
+	}
+
+	static std::unique_ptr<Node> right_rotate(std::unique_ptr<Node> node) {
+		auto pivot = std::move(node->left);
+		node->left = std::move(pivot->right);
+		pivot->right = std::move(node);
+		return std::move(pivot);
+	}
+
+	static std::unique_ptr<Node> left_rotate(std::unique_ptr<Node> node) {
+		auto pivot = std::move(node->right);
+		node->right = std::move(pivot->left);
+		pivot->left = std::move(node);
+		return std::move(pivot);
 	}
 };
 
